@@ -1,5 +1,6 @@
 const { Router } = require("express");
 const { Product } = require("../db.js");
+const { Op } = require("sequelize");
 
 const router = Router();
 
@@ -7,6 +8,43 @@ router.get("/", async (req, res, next) => {
   try {
     const products = await Product.findAll();
     res.status(200).json(products);
+  } catch (error) {
+    console.log(error);
+    res.status(error.status).json(error.message);
+  }
+});
+router.get("/search", async (req, res, next) => {
+  const { search } = req.query;
+  try {
+    console.log(search);
+    const results = await Product.findAll({
+      where: {
+        [Op.or]: [
+          {
+            name: {
+              [Op.iLike]: `%${search}%`, // Búsqueda parcial por nombre
+            },
+          },
+          {
+            brand: {
+              [Op.iLike]: `%${search}%`, // Búsqueda parcial por marca
+            },
+          },
+        ],
+      },
+    });
+    res.status(200).json(results);
+  } catch (error) {
+    console.log(error);
+    res.status(error.status).json(error.message);
+  }
+});
+router.get("/:code", async (req, res, next) => {
+  try {
+    const product = await Product.findOne({
+      where: { code: req.params.code },
+    });
+    res.status(200).json(product);
   } catch (error) {
     console.log(error);
     res.status(error.status).json(error.message);
@@ -33,7 +71,7 @@ router.post("/", async (req, res, next) => {
       brand: brand.toUpperCase(),
       name: name.toUpperCase(),
       quantity,
-      measurement: measurement.toUpperCase(), 
+      measurement: measurement.toUpperCase(),
       stock,
       category: category.toUpperCase(),
       costPrice,
@@ -44,11 +82,50 @@ router.post("/", async (req, res, next) => {
       code,
     };
     await Product.create(newProduct);
-    res.status(200).send(`${newProduct.brand} ${newProduct.name} creado con éxito`);
+    res
+      .status(200)
+      .send(`${newProduct.brand} ${newProduct.name} creado con éxito`);
   } catch (error) {
     console.log(error.message);
     res.status(400).json({ message: error.message });
   }
+});
+
+router.put("/product/:id", async (req, res) => {
+  const { id } = req.params;
+  const {
+    brand,
+    name,
+    quantity,
+    measurement,
+    category,
+    costPrice,
+    wholesalerPrice,
+    retailPrice,
+    iva,
+    iibb,
+    stock,
+    code,
+  } = req.body;
+  try {
+    const product = await Product.findByPk(id);
+    if (!product) {
+      res.status(404).json("Producto no encontrado");
+    } else {
+      product.brand = brand || product.brand;
+      product.name = name || product.name;
+      product.quantity = quantity || product.quantity;
+      product.measurement = measurement || product.measurement;
+      product.category = category || product.category;
+      product.costPrice = costPrice || product.costPrice;
+      product.wholesalerPrice = wholesalerPrice || product.wholesalerPrice;
+      product.retailPrice = retailPrice || product.retailPrice;
+      product.iva = iva || product.iva;
+      product.iibb = iibb || product.iibb;
+      product.stock = stock || product.stock;
+      product.code = code || product.code;
+    }
+  } catch (error) {}
 });
 
 module.exports = router;

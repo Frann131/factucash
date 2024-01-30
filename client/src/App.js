@@ -1,5 +1,5 @@
 import './App.css';
-import Caja from "./components/Caja.jsx";
+import Caja from "./components/Caja/Caja.jsx";
 function App() {
   return (
     <div className="App">

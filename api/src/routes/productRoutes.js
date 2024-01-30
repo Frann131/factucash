@@ -5,14 +5,32 @@ const { Op } = require("sequelize");
 const router = Router();
 
 router.get("/", async (req, res, next) => {
+  const { category, name, brand, quantity } = req.query;
+  console.log(req.params);
   try {
-    const products = await Product.findAll();
+    const whereClause = {};
+    if (name) {
+      whereClause.name = name.toUpperCase();
+    }
+    if (brand) {
+      whereClause.brand = brand.toUpperCase();
+    }
+    if (quantity) {
+      whereClause.quantity = quantity;
+    }
+    if (category) {
+      whereClause.category = category.toUpperCase();
+    }
+    const products = await Product.findAll({
+      where: whereClause,
+    });
     res.status(200).json(products);
   } catch (error) {
     console.log(error);
     res.status(error.status).json(error.message);
   }
 });
+
 router.get("/search", async (req, res, next) => {
   const { search } = req.query;
   try {
@@ -44,7 +62,11 @@ router.get("/:code", async (req, res, next) => {
     const product = await Product.findOne({
       where: { code: req.params.code },
     });
-    res.status(200).json(product);
+    if (!product) {
+      res.status(404).json("Producto no encontrado");
+    } else {
+      res.status(200).json(product);
+    }
   } catch (error) {
     console.log(error);
     res.status(error.status).json(error.message);
@@ -126,6 +148,21 @@ router.put("/product/:id", async (req, res) => {
       product.code = code || product.code;
     }
   } catch (error) {}
+});
+
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const product = await Product.findByPk(id);
+    if (!product) {
+      res.status(404).json("Producto no encontrado");
+    } else {
+      await product.destroy();
+      res.status(200).json("Producto eliminado correctamente");
+    }
+  } catch (error) {
+    res.status(error.status).json("No se pudo eliminar el producto");
+  }
 });
 
 module.exports = router;

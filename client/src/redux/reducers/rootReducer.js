@@ -8,7 +8,7 @@ import providersReducer from "./providersReducer";
 
 const rootReducer = combineReducers({
   users: usersReducer,
-  products: productsReducer,
+  // products: productsReducer,
   sales: salesReducer,
   purchases: purchasesReducer,
   clients: clientsReducer,
